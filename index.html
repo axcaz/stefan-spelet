@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stefan i shorts</title>
+<meta name="description" content="Ett litet pixelspel om Stefan, shorts och adrenalin. Grattis på födelsedagen!">
+<meta property="og:title" content="Stefan i shorts">
+<meta property="og:description" content="Ett litet pixelspel om Stefan, shorts och adrenalin. Grattis på födelsedagen!">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page:#f1e4d0; --ink:#3a2a44; --frame:#2a1d33; --btn:#3a2a44; --btn-ink:#fbeede; --btn-shadow:#1c1322;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --page:#17101d; --ink:#d8c9e4; --frame:#000; --btn:#3a2a44; --btn-ink:#fbeede; --btn-shadow:#08050b; }
+}
+:root[data-theme="dark"]{ --page:#17101d; --ink:#d8c9e4; --frame:#000; --btn:#3a2a44; --btn-ink:#fbeede; --btn-shadow:#08050b; }
+*,*::before,*::after{box-sizing:border-box}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  height:100%;margin:0;background:var(--page);color:var(--ink);
+  font-family:'VT323',ui-monospace,Menlo,Consolas,monospace;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;
+}
+#screen{
+  position:relative;aspect-ratio:4/3;
+  width:min(calc(100vw - 24px),960px,calc((100vh - 70px) * 4 / 3));
+  border:4px solid var(--frame);border-radius:8px;overflow:hidden;background:#000;
+  box-shadow:0 12px 32px rgba(0,0,0,.35);
+}
+@supports (height:100dvh){ #screen{ width:min(calc(100vw - 24px),960px,calc((100dvh - 70px) * 4 / 3)); } }
+body.touch #screen{ width:min(calc(100vw - 12px),960px,calc((100vh - 240px) * 4 / 3)); }
+@supports (height:100dvh){ body.touch #screen{ width:min(calc(100vw - 12px),960px,calc((100dvh - 240px) * 4 / 3)); } }
+canvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
+
+#dialog{
+  position:absolute;left:3%;right:3%;bottom:3%;display:none;
+  background:rgba(22,14,30,.95);border:3px solid #fbeede;border-radius:6px;
+  box-shadow:0 0 0 3px #160e1e;padding:.45em .8em .6em;color:#fbeede;
+  font-size:max(17px,calc(var(--u,3px) * 9));line-height:1.08;cursor:pointer;
+}
+#dname{font-family:'Press Start 2P',monospace;font-size:.5em;color:#ff9d5c;margin-bottom:.45em}
+#dtext{min-height:2.1em;white-space:pre-wrap}
+#dchoices{display:flex;flex-direction:column;gap:.12em;margin-top:.3em}
+#dchoices button{font:inherit;color:#fbeede;background:transparent;border:0;text-align:left;padding:.08em .3em;border-radius:3px;cursor:pointer}
+#dchoices button.sel{background:#fbeede;color:#1e1328}
+#dchoices button:focus-visible{outline:2px solid #ff9d5c}
+#dnext{position:absolute;right:.6em;bottom:.25em;color:#ff9d5c;animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+
+.overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;text-align:center;color:#fff}
+#title{justify-content:flex-start;padding-top:5%;gap:calc(var(--u,3px)*4)}
+#title h1{
+  font-family:'Press Start 2P',monospace;font-weight:400;margin:0;line-height:1.3;
+  font-size:calc(var(--u,3px) * 15);color:#fffaf0;letter-spacing:.02em;
+  text-shadow:calc(var(--u,3px)*1.4) calc(var(--u,3px)*1.4) 0 #c23b22, calc(var(--u,3px)*2.8) calc(var(--u,3px)*2.8) 0 #3a1d12;
+}
+#title p{margin:0;font-size:max(18px,calc(var(--u,3px)*10));color:#3a1d12}
+.pixbtn{
+  font-family:'Press Start 2P',monospace;font-size:max(12px,calc(var(--u,3px)*6));
+  background:#2a7fd4;color:#fff;border:0;padding:.8em 1.3em;border-radius:4px;cursor:pointer;
+  box-shadow:0 .35em 0 #174a80;
+}
+.pixbtn:active{transform:translateY(.2em);box-shadow:0 .15em 0 #174a80}
+.pixbtn:focus-visible{outline:3px solid #fff;outline-offset:3px}
+#final{display:none;justify-content:center;gap:calc(var(--u,3px)*5);background:rgba(28,12,36,.6);padding:0 6%}
+#final h2{font-family:'Press Start 2P',monospace;font-weight:400;margin:0;font-size:calc(var(--u,3px)*12);line-height:1.35;color:#ffd23f;text-shadow:calc(var(--u,3px)*1.4) calc(var(--u,3px)*1.4) 0 #c23b22}
+#final p.date{font-family:'Press Start 2P',monospace;font-size:calc(var(--u,3px)*6);color:#fff}
+#final p{margin:0;font-size:max(18px,calc(var(--u,3px)*10));max-width:32ch}
+
+#hint{font-size:20px;opacity:.85;text-align:center;padding:0 12px}
+#pad{display:none;width:min(calc(100vw - 16px),520px);justify-content:space-between;align-items:center;padding:0 10px;touch-action:none}
+body.touch #pad{display:flex}
+body.touch #hint{display:none}
+.dpad{display:grid;grid-template-columns:repeat(3,58px);grid-template-rows:repeat(3,58px)}
+.dpad button{background:var(--btn);color:var(--btn-ink);border:0;border-radius:10px;font-size:22px;box-shadow:0 5px 0 var(--btn-shadow);touch-action:none}
+.dpad .u{grid-area:1/2}.dpad .l{grid-area:2/1}.dpad .r{grid-area:2/3}.dpad .d{grid-area:3/2}
+#abtn{width:88px;height:88px;border-radius:50%;border:0;background:#e0492f;color:#fff;font-family:'Press Start 2P',monospace;font-size:24px;box-shadow:0 6px 0 #7d2413;touch-action:none}
+#abtn.ready{background:#ff6a3d}
+#pad button:active{transform:translateY(3px)}
+@media (prefers-reduced-motion: reduce){#dnext{animation:none}}
+</style>
+</head>
+<body>
+<div id="screen">
+  <canvas id="c" width="320" height="240" aria-label="Spelet Stefan i shorts"></canvas>
+  <div id="dialog" role="dialog" aria-live="polite">
+    <div id="dname"></div>
+    <div id="dtext"></div>
+    <div id="dchoices"></div>
+    <div id="dnext">▼</div>
+  </div>
+  <div id="title" class="overlay">
+    <h1>STEFAN<br>I SHORTS</h1>
+    <p>Ett adrenalinäventyr</p>
+    <button id="startBtn" class="pixbtn">Starta</button>
+  </div>
+  <div id="final" class="overlay">
+    <h2>GRATTIS<br>STEFAN!</h2>
+    <p class="date">28 september</p>
+    <p>Du tog dig igenom hela din födelsedag utan långbyxor. Imponerande i din ålder.</p>
+    <p id="fromLine"></p>
+    <button id="finalBtn" class="pixbtn">Fortsätt spela</button>
+  </div>
+</div>
+<div id="hint">Piltangenter eller WASD för att gå. Mellanslag för att prata och göra saker.</div>
+<div id="pad">
+  <div class="dpad">
+    <button class="u" data-k="up" aria-label="Upp">▲</button>
+    <button class="l" data-k="left" aria-label="Vänster">◀</button>
+    <button class="r" data-k="right" aria-label="Höger">▶</button>
+    <button class="d" data-k="down" aria-label="Ner">▼</button>
+  </div>
+  <button id="abtn" data-k="a" aria-label="Gör">A</button>
+</div>
+
+<script>
+(()=>{
+'use strict';
+// ====== Ändra här ======
+const AVSANDARE = 'Anna'; // vem presenten är från
+const ALDER = 47;          // hur gammal Stefan fyller
+// =======================
+
+const W=320,H=240,T=16;
+const $=id=>document.getElementById(id);
+const cv=$('c'),ctx=cv.getContext('2d');ctx.imageSmoothingEnabled=false;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+function R(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),w,h);}
+function txt(s,x,y,c,size,align){ctx.font=(size||14)+'px VT323, ui-monospace, monospace';ctx.textAlign=align||'left';ctx.fillStyle='rgba(0,0,0,.65)';ctx.fillText(s,x+1,y+1);ctx.fillStyle=c||'#fff';ctx.fillText(s,x,y);}
+function txt2(s,x,y,c,size){ctx.font=(size||10)+'px VT323, ui-monospace, monospace';ctx.textAlign='center';ctx.fillStyle=c;ctx.fillText(s,x,y);}
+function rng(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+// ---------- Sprites ----------
+const PAL={H:'#5e3b1f',h:'#8b5a2e',G:'#b9b2a8',S:'#e9b690',s:'#c98f6b',W:'#ffffff',E:'#3d86e0',B:'#a47b62',M:'#b0625a',
+  T:'#e0492f',t:'#a9311c',P:'#6f7d45',p:'#56623a',F:'#2aa7d8',K:'#2a1b12',R:'#ff5fa8',Y:'#e8c14a'};
+function mk(rows,pal){const c=document.createElement('canvas');c.width=rows[0].length;c.height=rows.length;const g=c.getContext('2d');
+  rows.forEach((r,y)=>[...r].forEach((ch,x)=>{const col=pal[ch];if(col){g.fillStyle=col;g.fillRect(x,y,1,1);}}));return c;}
+
+const HEAD_D=[
+"...HHHHHH...",
+"..HHhHHhHH..",
+".HHhHHHHhHH.",
+".HGSSSSSSGH.",
+"HHSSSSSSSSHH",
+"HHSWESSWESHH",
+"HhSSSSSSSShH",
+"HHBSSMMSSBHH",
+".HHBBBBBBHH.",
+".HHTTSSTTHH."];
+const HEAD_DG=HEAD_D.slice();HEAD_DG[4]="HHSRRSSRRSHH";HEAD_DG[5]="HHSRRYYRRSHH";HEAD_DG[6]="HhSSRSSRSShH";
+const HEAD_U=[
+"...HHHHHH...",
+"..HHhHHhHH..",
+".HHhHHHHhHH.",
+".HHHHhHHHHH.",
+"HHhHHHHHHhHH",
+"HHHHHhhHHHHH",
+"HhHHHHHHHHhH",
+"HHHHhHHhHHHH",
+".HHHHHHHHHH.",
+".HHTTTTTTHH."];
+const BODY_D=[
+"STTTTTTTTTTS",
+"STTTTTTTTTTS",
+"StTTTTTTTTtS",
+"s.PPPPPPPP.s",
+"..PPPppPPP.."];
+const LEGS_D=[
+["..SS....SS..","..SS....SS..",".FFF....FFF."],
+["..SS....SS..","..FF....SS..","........FFF."],
+["..SS....SS..","..SS....FF..",".FFF........"]];
+const HEAD_S=[
+"...HHHHHH...",
+"..HHhHHHHH..",
+".HHhHHHHHHH.",
+".HHHHGSSSSS.",
+"HHHHHSSSSSS.",
+"HHhHHSSSWES.",
+"HHHHHSSSSSSs",
+"HhHHHBSSSMS.",
+".HHHHBBBBB..",
+"..HHTTSSTT.."];
+const HEAD_SG=HEAD_S.slice();HEAD_SG[4]="HHHHHSSRRSS.";HEAD_SG[5]="HHhHHSYRRRS.";HEAD_SG[6]="HHHHHSSSRSSs";
+const BODY_S=[
+"...TTTTTTT..",
+"...TTTSTTT..",
+"...TTTSTTT..",
+"...PPPsPPP..",
+"...PPPPPP..."];
+const LEGS_S=[
+["....SS.SS...","....SS.SS...","...FFF.FFF.."],
+["...SS...SS..","..SS.....SS.",".FFF.....FFF"],
+["....SSSS....","....SSSS....","...FFFFF...."]];
+const SPR=[0,1].map(g=>({
+  down:LEGS_D.map(l=>mk([...(g?HEAD_DG:HEAD_D),...BODY_D,...l],PAL)),
+  up:LEGS_D.map(l=>mk([...HEAD_U,...BODY_D,...l],PAL)),
+  side:LEGS_S.map(l=>mk([...(g?HEAD_SG:HEAD_S),...BODY_S,...l],PAL))
+}));
+
+const NPC_ROWS=[
+"....HHHH....",
+"...HHHHHH...",
+"..HHHHHHHH..",
+"..HSSSSSSH..",
+"..SSSSSSSS..",
+"..SWESSWES..",
+"..SSSSSSSS..",
+"..SSSMMSSS..",
+"...SSSSSS...",
+"....SSSS....",
+".TTTTTTTTTT.",
+"STTTTTTTTTTS",
+"StTTTTTTTTtS",
+"s.PPPPPPPP.s",
+"..PPPppPPP..",
+"..PP....PP..",
+"..PP....PP..",
+".KKK....KKK."];
+const npcPal=o=>Object.assign({},PAL,{E:'#4a3a2a'},o);
+const NPCS={
+  roffe:mk(NPC_ROWS,npcPal({H:'#8f8f8f',T:'#2f5f9e',t:'#234a7c',P:'#2f5f9e',p:'#234a7c',K:'#222',S:'#e0a987'})),
+  teacher:mk(NPC_ROWS,npcPal({H:'#d9b45a',T:'#f4f6f7',t:'#cfd8dc',P:'#f4f6f7',p:'#cfd8dc',K:'#7fd1c1'})),
+  instr:mk(NPC_ROWS,npcPal({H:'#3a2a1a',T:'#f07a2a',t:'#c45f1c',P:'#f07a2a',p:'#c45f1c',K:'#333'})),
+};
+
+
+// ---- Festgästerna: familjerna ----
+const HEADS={
+ long:["...HHHHHH...","..HHHHHHHH..",".HHHHHHHHHH.",".HHSSSSSSHH.",".HSSSSSSSSH.",".HSWESSWESH.",".HSSSSSSSSH.",".HSSSMMSSSH.",".HHSSSSSSHH.",".HHHSSSSHHH."],
+ bangs:["...HHHHHH...","..HHHHHHHH..",".HHHHHHHHHH.",".HHHHHHHHHH.",".HSSSSSSSSH.",".HSWESSWESH.",".HSSSSSSSSH.",".HSSSMMSSSH.",".HHSSSSSSHH.",".HHHSSSSHHH."],
+ shortdyed:["...HHHHHH...","..HHHHHHHH..","..HHHHHHHH..","..HHHHSSSH..","..HHSSSSSS..","..SWESSWES..","..SSSSSSSS..","..SSSMMSSS..","...SSSSSS...","....SSSS...."],
+ beard:["....HHHH....","...HHHHHH...","..HHHHHHHH..","..HSSSSSSH..","..SSSSSSSS..","..SWESSWES..","..DSSSSSSD..","..DDSMMSDD..","..DDDDDDDD..","...DDDDDD..."]};
+const BODIES={
+ tall:[".TTTTTTTTTT.","STTTTTTTTTTS","STTTTTTTTTTS","StTTTTTTTTtS","s.PPPPPPPP.s","..PPPppPPP..","..PP....PP..","..PP....PP..","..PP....PP..",".KKK....KKK."],
+ adult:[".TTTTTTTTTT.","STTTTTTTTTTS","StTTTTTTTTtS","s.PPPPPPPP.s","..PPPppPPP..","..PP....PP..","..PP....PP..",".KKK....KKK."],
+ kid9:["..TTTTTTTT..",".STTTTTTTTS.",".StTTTTTTtS.","..PPPPPPPP..","...PP..PP...","..KKK..KKK.."],
+ kid4:["..TTTTTTTT..",".STTTTTTTTS.","..TTTTTTTT..","...SS..SS...","..KK....KK.."]};
+function person(o){const rows=[...HEADS[o.head],...BODIES[o.body]].map(r=>r.split(''));
+  for(let i=0;i<(o.hairRows||0);i++){const r=rows[10+i];r[1]='H';r[10]='H';}
+  if(o.head==='beard'){['D','D','D','D'].forEach((c,i)=>rows[10][4+i]='D');}
+  (o.grey||[]).forEach(([y,x])=>{if(rows[y][x]==='H')rows[y][x]='G';});
+  return mk(rows.map(r=>r.join('')),npcPal(o.pal));}
+const GREY=[[0,4],[1,3],[2,8],[3,2],[1,7],[4,1],[6,10]];
+Object.assign(NPCS,{
+ asa:person({head:'long',body:'tall',hairRows:4,pal:{H:'#6b4226',E:'#3fa05a',T:'#7a5ca8',t:'#5b4282',P:'#34344a',p:'#26263a',K:'#2a2a2a'}}),
+ luna:person({head:'shortdyed',body:'tall',pal:{H:'#1d1a22',T:'#2b2b33',t:'#1b1b22',P:'#3b5a8a',p:'#2c4670',K:'#eeeeee'}}),
+ lilly:person({head:'long',body:'kid9',hairRows:4,pal:{H:'#e8c86a',E:'#3d86e0',T:'#ff8fb8',t:'#d96a95',P:'#5a6fb0',p:'#475a94',K:'#fff'}}),
+ anna:person({head:'bangs',body:'adult',hairRows:1,grey:GREY,pal:{H:'#dcc38e',G:'#cfcac0',E:'#3d86e0',T:'#2f9e9a',t:'#227775',P:'#3b4f7a',p:'#2d3d60',K:'#8a5a3a'}}),
+ lo:person({head:'long',body:'kid4',hairRows:3,pal:{H:'#f0c64a',E:'#3d86e0',T:'#ffd23f',t:'#e0b21f',P:'#ffd23f',p:'#e0b21f',K:'#ff6a8a'}}),
+ mathias:person({head:'beard',body:'tall',pal:{H:'#3e2716',D:'#3e2716',E:'#3d86e0',T:'#b8412f',t:'#8f3122',P:'#2f3f66',p:'#23304f',K:'#4a3020'}}),
+ sofia:person({head:'bangs',body:'adult',hairRows:4,grey:GREY,pal:{H:'#a8804f',G:'#cfc8bc',E:'#3d86e0',T:'#e3b04b',t:'#c08e2f',P:'#4a4458',p:'#383344',K:'#2a2a2a'}})
+});
+
+// ---------- State ----------
+let t=0;
+const state={mode:'title',busy:false,adr:70,cold:10,stars:new Set(),glasses:false,candles:true,finale:false,
+  fade:0,banner:{s:'',t:0},shake:0,sparkT:0,sparkX:0,sparkY:0};
+const P={x:80,y:136,face:'down',anim:0,moving:false,slide:null,oneFlop:false};
+let scene=null,F=null;
+const parts=[],floaters=[];
+
+// ---------- Input ----------
+const held=new Set(),pressed=new Set();
+const KEYMAP={ArrowUp:'up',KeyW:'up',ArrowDown:'down',KeyS:'down',ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',
+  Space:'a',Enter:'a',KeyE:'a',KeyZ:'a',Digit1:'1',Digit2:'2',Digit3:'3'};
+addEventListener('keydown',e=>{const k=KEYMAP[e.code];if(!k)return;if(e.target&&e.target.tagName==='BUTTON'&&k==='a'&&state.mode==='title')return;e.preventDefault();if(!held.has(k))pressed.add(k);held.add(k);});
+addEventListener('keyup',e=>{const k=KEYMAP[e.code];if(k)held.delete(k);});
+addEventListener('blur',()=>held.clear());
+document.querySelectorAll('#pad [data-k]').forEach(b=>{const k=b.dataset.k;
+  const on=e=>{e.preventDefault();if(!held.has(k))pressed.add(k);held.add(k);};
+  const off=e=>{e.preventDefault();held.delete(k);};
+  b.addEventListener('pointerdown',on);b.addEventListener('pointerup',off);b.addEventListener('pointerleave',off);b.addEventListener('pointercancel',off);
+  b.addEventListener('contextmenu',e=>e.preventDefault());});
+if(matchMedia('(pointer: coarse)').matches)document.body.classList.add('touch');
+addEventListener('touchstart',()=>document.body.classList.add('touch'),{once:true,passive:true});
+const abtn=$('abtn');
+function resize(){$('screen').style.setProperty('--u',($('screen').clientWidth/320)+'px');}
+addEventListener('resize',resize);resize();
+
+// ---------- Dialog ----------
+const dEl=$('dialog'),dName=$('dname'),dText=$('dtext'),dCh=$('dchoices'),dNext=$('dnext');
+let dlg=null;
+function open(name,text,choices){return new Promise(res=>{
+  dlg={text,choices:choices||null,sel:0,shown:0,res};
+  dEl.style.display='block';dName.textContent=name||'';dName.style.display=name?'block':'none';
+  dText.textContent='';dCh.innerHTML='';dNext.style.visibility='hidden';});}
+const say=(n,s)=>open(n,s);
+const ask=(n,s,c)=>open(n,s,c);
+async function seq(lines){for(const [n,s] of lines)await say(n,s);}
+function renderChoices(){dCh.innerHTML='';dlg.choices.forEach((c,i)=>{const b=document.createElement('button');
+  b.textContent=(i===dlg.sel?'▶ ':'  ')+c;if(i===dlg.sel)b.className='sel';
+  b.addEventListener('click',e=>{e.stopPropagation();if(dlg)choose(i);});dCh.appendChild(b);});}
+function finishType(){dlg.shown=dlg.text.length;dText.textContent=dlg.text;if(dlg.choices)renderChoices();else dNext.style.visibility='visible';}
+function updateDialog(dt){if(dlg.shown<dlg.text.length){dlg.shown=Math.min(dlg.text.length,dlg.shown+dt*60);dText.textContent=dlg.text.slice(0,Math.floor(dlg.shown));if(dlg.shown>=dlg.text.length)finishType();}}
+function dialogAction(){if(!dlg)return;if(dlg.shown<dlg.text.length){finishType();return;}if(dlg.choices)choose(dlg.sel);else close(0);}
+function choose(i){close(i);}
+function close(v){const r=dlg.res;dlg=null;dEl.style.display='none';r(v);}
+dEl.addEventListener('click',()=>{if(!dlg)return;if(dlg.shown<dlg.text.length)finishType();else if(!dlg.choices)close(0);});
+function handleDialogInput(){
+  if(pressed.has('a')){dialogAction();return;}
+  if(dlg&&dlg.choices&&dlg.shown>=dlg.text.length){const n=dlg.choices.length;
+    if(pressed.has('up')||pressed.has('left')){dlg.sel=(dlg.sel+n-1)%n;renderChoices();}
+    if(pressed.has('down')||pressed.has('right')){dlg.sel=(dlg.sel+1)%n;renderChoices();}
+    ['1','2','3'].forEach((k,i)=>{if(dlg&&pressed.has(k)&&i<n)choose(i);});}
+}
+
+// ---------- Helpers ----------
+async function runEvent(fn){if(state.busy)return;state.busy=true;try{await fn();}catch(err){console.error(err);}finally{state.busy=false;}}
+function cycle(e,arr){const i=(e.n||0)%arr.length;e.n=(e.n||0)+1;return arr[i];}
+function floater(s,x,y,c){floaters.push({s,x,y,c:c||'#fff',l:1.4});}
+function addAdr(n){state.adr=clamp(state.adr+n,0,100);
+  const x=state.mode==='fall'?F.x:P.x,y=state.mode==='fall'?F.sy-26:P.y-24;
+  floater((n>0?'+':'')+n+' adrenalin',x,y,n>0?'#ffb36b':'#9fc3ff');}
+function sparks(x,y,dur){state.sparkX=x;state.sparkY=y;state.sparkT=dur;}
+function confetti(){const cols=['#ff5fa8','#ffd23f','#5ab4ff','#7ddc6a','#ff7a3d','#fff'];
+  for(let i=0;i<170;i++)parts.push({x:Math.random()*W,y:-Math.random()*90,vx:(Math.random()-.5)*40,vy:20+Math.random()*40,g:28,l:4+Math.random()*2,c:pick(cols),s:2});}
+function slide(){return new Promise(res=>{P.slide={t:0,res};floater('WHOOOSH',P.x,P.y-24,'#fff');});}
+async function star(id,name){if(state.stars.has(id))return;state.stars.add(id);
+  const cols=['#ffd23f','#fff3a0'];for(let i=0;i<40;i++)parts.push({x:P.x,y:P.y-12,vx:(Math.random()-.5)*140,vy:-Math.random()*140,g:220,l:1.2,c:pick(cols),s:2});
+  await say('','★ Stjärna: '+name+'! ('+state.stars.size+'/3)');
+  if(state.stars.size===3)await say('','Alla tre stjärnor! Borta vid flygfältet har någon tagit bort repet. Det luktar tårta.');}
+const dirv=f=>({down:[0,1],up:[0,-1],left:[-1,0],right:[1,0]})[f];
+
+// ---------- World ----------
+function makeSolid(opens,edge){const g=[];for(let y=0;y<15;y++){g[y]=[];for(let x=0;x<20;x++)g[y][x]=(y<=1||y===14||x===0||x===19)?1:0;}
+  opens.forEach(([x,y])=>g[y][x]=0);return g;}
+const SCENES={};
+function def(id,o){o.id=id;o.solid=makeSolid(o.opens||[]);
+  o.ents=o.ents.map(e=>Object.assign({px:e.x*T,py:e.y*T,pw:(e.w||1)*T,ph:(e.h||1)*T},e));
+  o.exits=(o.exits||[]).map(x=>Object.assign({px:x.x*T,py:x.y*T,pw:T,ph:2*T},x));SCENES[id]=o;}
+function visEnts(){return scene.ents.filter(e=>!e.when||e.when());}
+function isBlocked(ex){return ex.lock&&ex.lock();}
+function paintBg(sc){const c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');const r=rng(sc.seed||7);
+  const Q=(x,y,w,h,col)=>{g.fillStyle=col;g.fillRect(x,y,w,h);};
+  for(let ty=0;ty<15;ty++)for(let tx=0;tx<20;tx++){const x=tx*T,y=ty*T;if(sc.solid[ty][tx])sc.wall(Q,x,y,tx,ty,r);else sc.floor(Q,x,y,tx,ty,r);}
+  if(sc.deco)sc.deco(Q,r);return c;}
+function bush(Q,x,y,a,b,c){Q(x,y,T,T,a);Q(x+2,y+2,5,4,b);Q(x+9,y+8,5,4,b);Q(x+4,y+11,3,2,c);Q(x+11,y+3,2,2,c);}
+function grass(Q,x,y,r,base,hi,lo){Q(x,y,T,T,base);Q(x+(r()*14|0),y+(r()*13|0),1,2,hi);Q(x+(r()*14|0),y+(r()*13|0),1,2,lo);if(r()<.3)Q(x+(r()*14|0),y+(r()*14|0),1,1,hi);}
+
+// ---------- Entity drawers ----------
+function npc(key){return e=>{const s=NPCS[key];const b=(Math.sin(t*2.2+e.px)>0.6)?1:0;R(e.px+3,e.py+14,10,3,'rgba(0,0,0,.22)');ctx.drawImage(s,e.px+8-s.width/2,e.py+16-s.height+b);};}
+function drawCal(e){const x=e.px,y=e.py;R(x+2,y+1,12,14,'#fdfbf5');R(x+2,y+1,12,3,'#c0392b');R(x+4,y,1,2,'#555');R(x+11,y,1,2,'#555');txt2('28',x+8,y+12,'#222',9);
+  R(x+3,y+5,10,1,'#e74c3c');R(x+3,y+13,10,1,'#e74c3c');R(x+3,y+5,1,9,'#e74c3c');R(x+12,y+5,1,9,'#e74c3c');}
+function drawBench(e){const x=e.px,y=e.py,w=e.pw;R(x+1,y+10,2,6,'#3b3f45');R(x+w-3,y+10,2,6,'#3b3f45');R(x,y+2,w,9,'#9aa0a6');R(x,y+2,w,2,'#b8bec4');R(x,y+10,w,2,'#5b6068');
+  R(x+4,y-1,7,4,'#4a4f57');R(x+5,y-3,5,2,'#5d636b');R(x+16,y+4,9,2,'#7a5230');R(x+24,y+2,3,6,'#555a60');R(x+32,y+5,6,1,'#c9a13a');}
+function drawWeld(e){const x=e.px,y=e.py;R(x+2,y+28,30,4,'rgba(0,0,0,.25)');
+  R(x+22,y-6,6,14,'#3c8a4a');R(x+22,y-6,2,14,'#56a864');R(x+23,y-9,4,3,'#999');
+  R(x+2,y+6,28,24,'#2f6fb3');R(x+2,y+4,28,4,'#4a8ad0');R(x+2,y+26,28,4,'#1f4f84');
+  R(x+6,y+10,11,8,'#16324f');R(x+8,y+12,3,3,'#ffd23f');R(x+12,y+12,3,3,'#e74c3c');R(x+20,y+12,6,2,'#8fb8e0');
+  R(x+4,y-1,9,6,'#2b2b2b');R(x+6,y+1,5,2,'#5a7d5a');R(x+29,y+16,4,2,'#111');
+  if(state.sparkT>0&&Math.floor(t*20)%2){R(x+10,y+34,6,4,'rgba(200,230,255,.9)');R(x+6,y+30,14,10,'rgba(160,210,255,.3)');}}
+function drawFridge(e){const x=e.px,y=e.py;R(x+4,y+28,26,4,'rgba(0,0,0,.2)');R(x+4,y-8,24,38,'#eeeeea');R(x+4,y-8,24,2,'#ffffff');R(x+24,y-8,4,38,'#cfcfca');
+  R(x+4,y+6,20,1,'#bdbdb8');R(x+20,y-2,2,6,'#8a8a8a');R(x+20,y+10,2,8,'#8a8a8a');R(x+8,y-4,4,4,'#e74c3c');R(x+13,y-3,3,3,'#3aa0e0');}
+function drawRadio(e){const x=e.px,y=e.py;R(x+1,y+6,14,10,'#9c7443');R(x+1,y+6,14,2,'#b88a55');R(x+2,y,12,7,'#c0392b');R(x+3,y+2,4,4,'#222');R(x+9,y+2,3,1,'#ddd');R(x+9,y+4,3,1,'#ddd');R(x+12,y-5,1,5,'#aaa');}
+function drawGas(e){const x=e.px,y=e.py;R(x+2,y+28,12,3,'rgba(0,0,0,.25)');R(x+3,y-2,10,30,'#c9302c');R(x+3,y-2,3,30,'#e04b43');R(x+11,y-2,2,30,'#962320');R(x+6,y-6,4,4,'#888');
+  R(x+5,y+8,6,6,'#f1c40f');R(x+7,y+9,2,3,'#222');R(x+7,y+13,2,1,'#222');}
+function drawBoard(e){const x=e.px,y=e.py;R(x,y+1,64,14,'#8a8f94');R(x+2,y+2,60,11,'#fafafa');
+  const pts=[0,0,0,-1,3,-5,4,2,0,0,0,0,0,-1,3,-5,4,2,0,0,0,0,0,-1,3,-5,4,2,0,0];pts.forEach((d,i)=>R(x+4+i*2,y+8+d,2,1,'#e74c3c'));R(x+44,y+4,14,1,'#3a6fd8');R(x+44,y+7,10,1,'#3a6fd8');}
+function drawBed(e){const x=e.px,y=e.py;R(x+1,y+46,3,3,'#555');R(x+28,y+46,3,3,'#555');R(x,y,32,47,'#cfd8dc');R(x+2,y+2,28,43,'#fff');R(x+6,y+4,20,8,'#e3eef5');
+  R(x+12,y+5,8,7,'#f1d3b8');R(x+14,y+8,1,1,'#333');R(x+17,y+8,1,1,'#333');R(x+15,y+10,2,1,'#c77');R(x+2,y+16,28,28,'#8fc3e8');R(x+2,y+16,28,2,'#b7dbf3');R(x+4,y+14,4,14,'#f1d3b8');
+  R(x+35,y-6,1,34,'#9aa4aa');R(x+33,y-9,5,7,'#d6f0ff');R(x+34,y-2,1,18,'rgba(150,200,230,.8)');}
+function drawDesk(e){const x=e.px,y=e.py;R(x+1,y+2,30,9,'#c89b63');R(x+1,y+2,30,2,'#dcb27a');R(x+1,y+11,30,4,'#9c7443');
+  if(e.tenta){R(x+10,y+3,9,6,'#fff');R(x+11,y+5,6,1,'#999');R(x+11,y+7,4,1,'#999');R(x+21,y+4,6,1,'#f1c40f');R(x+26,y+4,1,1,'#333');}}
+function drawSkel(e){const x=e.px,y=e.py,c='#f4f1e8';R(x+3,y+30,10,2,'#555');R(x+7,y+26,2,5,'#777');R(x+5,y-4,6,6,c);R(x+6,y-2,1,1,'#222');R(x+9,y-2,1,1,'#222');R(x+7,y+2,2,14,c);
+  R(x+4,y+4,8,1,c);R(x+4,y+7,8,1,c);R(x+5,y+10,6,1,c);R(x+3,y+3,1,12,c);R(x+12,y+3,1,12,c);R(x+5,y+16,6,3,c);R(x+5,y+19,1,8,c);R(x+10,y+19,1,8,c);}
+function drawSprit(e){const x=e.px,y=e.py;R(x+4,y+14,8,2,'#6a6f74');R(x+7,y+4,2,11,'#8a8f94');R(x+5,y-2,6,8,'#9fd8f0');R(x+5,y-2,2,8,'#c8ecf8');R(x+7,y-5,2,3,'#fff');}
+function drawPlane(e){const x=e.px,y=e.py;R(x+6,y+40,70,5,'rgba(0,0,0,.18)');R(x+30,y+2,16,44,'#d84a3a');R(x+30,y+2,16,2,'#ef6a5a');
+  R(x+4,y+18,68,14,'#f4f4f2');R(x+4,y+18,68,3,'#fff');R(x+4,y+29,68,3,'#d5d5d0');R(x+4,y+25,68,2,'#d84a3a');R(x+72,y+20,6,10,'#e0e0dc');
+  R(x+4,y+10,8,8,'#d84a3a');R(x+4,y+32,8,6,'#d84a3a');R(x+22,y+21,7,8,'#2d2d33');
+  for(let i=0;i<3;i++)R(x+50+i*6,y+20,4,3,'#5fa8d8');
+  const f=Math.floor(t*24)%2;R(x+78,y+(f?12:22),2,14,'#333');R(x+77,y+23,4,4,'#999');}
+function drawHangar(e){const x=e.px,y=e.py;R(x,y-6,96,54,'#8a939b');for(let i=0;i<96;i+=5)R(x+i,y-6,1,54,'#7d868e');R(x,y-10,96,5,'#6a737b');
+  R(x+22,y+14,52,34,'#4f575e');R(x+47,y+14,2,34,'#3b4247');R(x+22,y,52,10,'#f4d03f');txt2('HOPPKLUBBEN',x+48,y+8,'#3a2a00',10);}
+function drawSock(e){const x=e.px,y=e.py;R(x+3,y-10,2,26,'#b0b0b0');R(x+1,y+14,6,2,'#777');
+  for(let i=0;i<4;i++)R(x+5+i*4,y-10+Math.round(Math.sin(t*6+i)*1.2)+i*0.5,4,6-i,i%2?'#fff':'#f07a2a');}
+function drawRope(e){const x=e.px,y=e.py;R(x+2,y-6,3,38,'#8a6a45');R(x+11,y-6,3,38,'#8a6a45');for(let i=0;i<30;i+=3)R(x+5,y-2+i,6,1,'#d2b27a');
+  R(x-8,y+10,16,10,'#f3e2b8');R(x-6,y+14,12,2,'#c0392b');}
+function drawCake(e){const x=e.px,y=e.py;R(x,y+8,32,20,'#fff');R(x,y+26,32,3,'#e2e2e2');for(let i=1;i<32;i+=4)R(x+i,y+27,2,2,'#f3d6e2');
+  R(x+8,y-2,16,12,'#f7a6c1');R(x+8,y-2,16,3,'#fff0f5');R(x+10,y-8,12,7,'#f7a6c1');R(x+10,y-8,12,2,'#fff0f5');
+  [12,15,18].forEach((cx,i)=>{R(x+cx,y-13,1,5,['#5dade2','#ffd23f','#7ddc6a'][i]);if(state.candles)R(x+cx,y-15-(Math.floor(t*8+i)%2),1,2,'#ff9d2f');});}
+
+// ---------- Scenes ----------
+def('workshop',{name:'Svetsverkstaden',seed:3,cold:-1,opens:[[19,7],[19,8]],
+  floor:(Q,x,y,tx,ty,r)=>{Q(x,y,T,T,(tx+ty)%2?'#77767b':'#737277');for(let i=0;i<3;i++)Q(x+(r()*15|0),y+(r()*15|0),1,1,r()<.5?'#68676c':'#88878c');Q(x,y,T,1,'#6d6c71');Q(x,y,1,T,'#6d6c71');},
+  wall:(Q,x,y,tx,ty)=>{if(ty===1&&tx>0&&tx<19){Q(x,y,T,T,'#6e4133');for(let row=0;row<4;row++){Q(x,y+row*4+3,T,1,'#4f2e22');Q(x+(row%2?0:8),y+row*4,1,3,'#4f2e22');}Q(x,y+T-2,T,2,'#3a231a');}else{Q(x,y,T,T,'#2e2320');Q(x,y,T,1,'#3d302b');}},
+  deco:(Q)=>{Q(100,150,14,5,'#5c5b60');Q(104,148,8,2,'#5c5b60');Q(220,190,10,4,'#5c5b60');for(let i=0;i<36;i+=4)Q(126+i,66,4,3,(i/4)%2?'#222':'#f1c40f');
+    Q(40,18,12,11,'#e8e0c8');Q(42,20,8,2,'#c0392b');Q(42,24,6,1,'#777');Q(42,26,7,1,'#777');},
+  exits:[{x:19,y:7,to:'school',sx:1.6,sy:8.3,label:'Skolan ▶'}],
+  ents:[
+    {id:'cal',x:5,y:1,solid:false,tall:-2,draw:drawCal,act:actCal},
+    {id:'bench',x:2,y:3,w:3,draw:drawBench},
+    {id:'bench2',x:5,y:12,w:3,draw:drawBench},
+    {id:'weld',x:8,y:2,w:2,h:2,tall:10,draw:drawWeld,act:actWeld},
+    {id:'fridge',x:16,y:2,w:2,h:2,tall:12,draw:drawFridge,act:actFridge},
+    {id:'radio',x:12,y:3,tall:6,draw:drawRadio,act:actRadio},
+    {id:'gas',x:2,y:10,h:2,tall:8,draw:drawGas,act:actGas},
+    {id:'roffe',x:13,y:9,tall:4,draw:npc('roffe'),act:actRoffe}]});
+
+def('school',{name:'Sjuksköterskeprogrammet',seed:11,cold:0.6,opens:[[0,7],[0,8],[19,7],[19,8]],
+  floor:(Q,x,y,tx,ty)=>{Q(x,y,T,T,(tx+ty)%2?'#dfe8e3':'#cfdcd6');},
+  wall:(Q,x,y,tx,ty)=>{if(ty===1&&tx>0&&tx<19){Q(x,y,T,T,'#a9cbbf');Q(x,y+T-3,T,3,'#5d7a70');}else{Q(x,y,T,T,'#4f6b62');Q(x,y,T,1,'#618076');}},
+  deco:(Q)=>{Q(210,3,44,26,'#f4f4f4');Q(213,6,18,20,'#bfe3f7');Q(233,6,18,20,'#e6f6ff');Q(233,6,18,2,'#fff');
+    [[236,9],[244,14],[240,20],[248,8],[215,12],[222,18]].forEach(([a,b])=>Q(a,b,1,3,'#7fb4dc'));Q(216,36,14,3,'#b5d4e8');Q(234,40,10,2,'#b5d4e8');
+    Q(40,18,12,12,'#fff');Q(43,21,6,5,'#e74c3c');Q(45,20,2,1,'#e74c3c');},
+  exits:[{x:0,y:7,to:'workshop',sx:18.4,sy:8.3,label:'◀ Verkstan'},{x:19,y:7,to:'airfield',sx:1.6,sy:8.3,label:'Flygfältet ▶'}],
+  enter:async()=>{await say('','Sjuksköterskeprogrammet, termin ett. Någon har öppnat ett fönster. Det är sju grader ute och regnar sidledes.');},
+  ents:[
+    {id:'board',x:6,y:1,w:4,solid:false,tall:-2,draw:drawBoard,act:actBoard},
+    {id:'teacher',x:11,y:3,tall:4,draw:npc('teacher'),act:actTeacher},
+    {id:'bed',x:14,y:5,w:2,h:3,tall:0,draw:drawBed,act:actDocka},
+    {id:'skel',x:17,y:2,h:2,tall:6,draw:drawSkel,act:actSkel},
+    {id:'d1',x:3,y:6,w:2,draw:drawDesk},{id:'d2',x:6,y:6,w:2,draw:drawDesk},{id:'d3',x:3,y:10,w:2,draw:drawDesk},
+    {id:'tenta',x:6,y:10,w:2,tenta:true,draw:drawDesk,act:actTenta},
+    {id:'sprit',x:10,y:12,tall:6,draw:drawSprit,act:actSprit}]});
+
+def('airfield',{name:'Flygfältet',seed:21,cold:0.5,opens:[[0,7],[0,8],[19,7],[19,8]],
+  floor:(Q,x,y,tx,ty,r)=>grass(Q,x,y,r,'#5fa843','#76c257','#4e9136'),
+  wall:(Q,x,y)=>bush(Q,x,y,'#3f7d2c','#529a3a','#2f6121'),
+  deco:(Q)=>{Q(16,176,288,32,'#5b5b5e');Q(16,176,288,1,'#48484b');Q(16,207,288,1,'#48484b');for(let x=24;x<300;x+=24)Q(x,191,12,2,'#f4f4f4');},
+  exits:[{x:0,y:7,to:'school',sx:18.4,sy:8.3,label:'◀ Skolan'},{x:19,y:7,to:'party',sx:1.6,sy:8.3,label:'Festen ▶',lock:()=>state.stars.size<3}],
+  enter:async()=>{await say('','Flygfältet. Det luktar flygbränsle och dåliga beslut. Stefan har aldrig varit lyckligare.');},
+  ents:[
+    {id:'plane',x:3,y:3,w:5,h:3,tall:-4,draw:drawPlane,act:actPlane},
+    {id:'hangar',x:12,y:2,w:6,h:3,tall:12,draw:drawHangar,act:actHangar},
+    {id:'instr',x:9,y:7,tall:4,draw:npc('instr'),act:actInstr},
+    {id:'sock',x:16,y:9,tall:12,draw:drawSock,act:actSock},
+    {id:'rope',x:19,y:7,h:2,tall:8,draw:drawRope,act:actRope,when:()=>state.stars.size<3}]});
+
+def('party',{name:'Trädgårdsfesten',seed:5,cold:-0.5,opens:[[0,7],[0,8]],
+  floor:(Q,x,y,tx,ty,r)=>{if(tx>=5&&tx<=14&&ty>=5&&ty<=11){Q(x,y,T,T,'#b98552');Q(x,y+7,T,1,'#a3733f');Q(x+(ty%2?4:12),y,1,7,'#a3733f');Q(x+(ty%2?10:2),y+8,1,8,'#a3733f');}else grass(Q,x,y,r,'#6bb04d','#80c962','#599a3e');},
+  wall:(Q,x,y,tx,ty)=>{if(ty===0){Q(x,y,T,T,'#8e2a23');}else if(ty===1){Q(x,y,T,T,'#a8342b');Q(x+5,y,1,T,'#8e2a23');Q(x+11,y,1,T,'#8e2a23');Q(x,y+T-2,T,2,'#f3efe6');}else bush(Q,x,y,'#3c7a2f','#4f9a3c','#2d5f22');},
+  deco:(Q)=>{[40,120,240].forEach(wx=>{Q(wx,4,20,22,'#f3efe6');Q(wx+3,7,14,16,'#6c9fbf');Q(wx+9,7,2,16,'#f3efe6');Q(wx+3,14,14,2,'#f3efe6');});
+    Q(62,34,3,34,'#8a6a45');Q(254,34,3,34,'#8a6a45');Q(62,32,195,3,'#8a6a45');
+    for(let x=66;x<252;x+=8){const h=12+((x*7)%12);Q(x,35,6,h,'rgba(255,255,255,.8)');Q(x+1,35+h,4,2,'rgba(255,255,255,.45)');}
+    for(let x=72;x<250;x+=22){const c='#e57ba0';Q(x,38,2,2,c);Q(x+3,38,2,2,c);Q(x,40,5,2,c);Q(x+1,42,3,1,c);Q(x+2,43,1,1,c);}},
+  exits:[{x:0,y:7,to:'airfield',sx:18.4,sy:8.3,label:'◀ Flygfältet'}],
+  enter:async()=>{await say('','En trädgårdsfest! Spetsgardiner, vegansk tårta, ett misstänkt halt dansgolv och alla favoritmänniskorna samlade kring tårtan.');},
+  ents:[
+    {id:'cake',x:9,y:6,w:2,h:2,tall:16,draw:drawCake,act:actCake},
+    {id:'asa',x:8,y:6,tall:6,label:'Åsa',draw:npc('asa'),act:actAsa},
+    {id:'luna',x:7,y:7,tall:6,label:'Luna',draw:npc('luna'),act:actLuna},
+    {id:'lilly',x:8,y:8,tall:2,label:'Lilly',draw:npc('lilly'),act:actLilly},
+    {id:'anna',x:11,y:6,tall:5,label:'Anna',draw:npc('anna'),act:actAnna},
+    {id:'lo',x:11,y:8,tall:1,label:'Lo',draw:npc('lo'),act:actLo},
+    {id:'mathias',x:12,y:7,tall:6,label:'Mathias',draw:npc('mathias'),act:actMathias},
+    {id:'sofia',x:13,y:6,tall:5,label:'Sofia',draw:npc('sofia'),act:actSofia}]});
+
+// ---------- Interactions ----------
+async function actWeld(e){
+  if(!state.stars.has('weld')){
+    await say('','Svetsaggregatet surrar förföriskt.');
+    const c=await ask('Stefan','Dags att svetsa. Skyddsmask?',['Klart jag tar mask','Mask är för amatörer']);
+    sparks(e.px+16,e.py+36,1.6);await wait(1100);
+    if(c===0){await say('','Stefan fäller ner masken. Den sitter bakochfram. Han svetsar ändå, helt på känn, och fogen blir perfekt.');addAdr(15);}
+    else{state.shake=.3;await say('','Stefan svetsar utan mask och ser allt i lila i tjugo minuter.');await say('Stefan','Det här är det vackraste jag sett.');addAdr(25);}
+    await star('weld','Svetsmästaren');
+  }else{sparks(e.px+16,e.py+36,1);await wait(700);
+    await say('',cycle(e,['Stefan svetsar ihop en liten stålfigur av sig själv. Den har shorts.','En gnista landar i flip-floppen. Stefan märker det först efter en kvart.','Stefan svetsar fast en kaffekopp i bänken. Nu välter den aldrig mer.']));addAdr(8);}
+}
+async function actCal(){await say('','Kalendern står på 28 september. Datumet är inringat med rött.');await say('','Någon har skrivit under: "STEFAN FYLLER. Göm gasoltuben."');}
+async function actFridge(e){await seq(cycle(e,[
+  [['','Lunchlådan är borta. På hyllan ligger en lapp: "Tack för halloumin. Visste inte att du var vegetarian. Nu är jag det också. /R"']],
+  [['','Kylskåpet innehåller en senapstub, tre energidrycker och en ensam gurka.'],['Stefan','Gurkan och jag förstår varandra.']],
+  [['','Stefan häller i sig en energidryck på fyra sekunder. Han hör nu färger.']]]));addAdr(6);}
+async function actRadio(e){for(let i=0;i<4;i++)floater('♪',e.px+8+(Math.random()*16-8),e.py-6-i*6,'#ffe07a');
+  await say('',cycle(e,['Stefan vrider upp radion på max. Det är dansband. Han headbangar ändå.','Radion spelar The Final Countdown. Stefan luftgitarrar med en avstängd vinkelslip.']));addAdr(6);}
+async function actGas(){const c=await ask('','Gasoltuben har en enorm varningsskylt. Vicka lite på den?',['Vicka lite','Låt bli']);
+  if(c===0){state.shake=.4;await say('','Den gungar. Stefan gungar med. Chefen ser allt.');await say('Chefen','STEFAN. Sopa hela verkstaden. Med en tandborste.');addAdr(20);}
+  else{await say('','Klokt. Så klokt att adrenalinet sjunker av ren förnuftighet.');addAdr(-10);}}
+async function actRoffe(e){await seq(cycle(e,[
+  [['Roffe','Stefan, det är åtta grader ute. Varför har du shorts?'],['Stefan','Knäna behöver andas.']],
+  [['Roffe','Så du ska bli sjuksköterska? Vem ska jag nu skylla allt på?'],['Stefan','Mig, men med ett lugnt och empatiskt bemötande.']],
+  [['Roffe','Hoppar du fallskärm i helgen igen?'],['Stefan','Varje helg. Och ibland på lunchen.']],
+  [['Roffe','Grattis! Hur gammal blir du nu?'],['Stefan',ALDER+'.'],['Roffe','Dina knän säger 112.']]]));addAdr(3);}
+
+async function actBoard(){await say('','På tavlan står: "Hjärtat slår ungefär 100 000 gånger per dygn."');await say('','Under har någon klottrat: "Stefans slår 200 000. Adrenalin."');addAdr(4);}
+async function actTeacher(e){const i=(e.n||0)%2;e.n=(e.n||0)+1;
+  if(i===0){await say('Läraren','Stefan. Det är sju grader. Det regnar in genom fönstret. Du har shorts.');await say('Stefan','Jag är varm i själen.');await say('','Själen är varm. Vaderna är det inte.');state.cold=clamp(state.cold+10,0,100);}
+  else{const c=await ask('Läraren','Vad är normal kroppstemperatur?',['Runt 37 grader','Beror på om man har shorts']);
+    if(c===0){await say('Läraren','Rätt. Tråkigt, men rätt.');addAdr(-3);}else{await say('','Läraren suckar så djupt att whiteboarden darrar.');addAdr(6);}}}
+async function actDocka(e){
+  if(!state.stars.has('nurse')){
+    await say('Läraren','Idag sätter vi perifer venkateter. Var snäll mot övningsdockan. Hon heter Berit.');
+    const c=await ask('Stefan','Var sätter vi den?',['I armen, som man ska','I stortån, för utmaningens skull','Fråga Berit själv']);
+    if(c===0){await say('','Stefan hittar venen på första försöket. Läraren tappar kaffet av ren chock.');addAdr(10);}
+    else if(c===1){await say('','Stefan går in via stortån. Läraren tittar länge. Sen skriver hon "kreativ" i protokollet.');addAdr(18);}
+    else{await say('Stefan','Berit, hur har du det idag, på en skala från ett till tio?');await say('Berit','...');await say('Stefan','Hon verkar ha det bra. Godkänt.');addAdr(12);}
+    await star('nurse','Blivande sjuksköterska');
+  }else{await say('',cycle(e,['Stefan tar Berits blodtryck. 120/80. Hans eget ligger på 180/110 av ren förväntan.','Berit ser ut som att hon har varit med om saker.','Stefan lägger Berit i stabilt sidoläge. Sen sig själv, för säkerhets skull.']));addAdr(4);}}
+async function actSkel(e){await say('',cycle(e,['Stefan bjuder upp skelettet på en dans. Det tackar ja. Bästa dansen i skolans historia.','Stefan jämför sina revben med skelettets. Han vinner. Tror han.','Stefan ställer sig bredvid skelettet. Skelettet ser yngre ut.']));addAdr(6);}
+async function actTenta(){const c=await ask('','Tentafråga 7: Vad är vanligaste orsaken till skador hos vuxna män?',['Fall','Trafikolyckor','"Håll min öl"']);
+  if(c===2){await say('','Fel enligt facit. Läraren ger ändå ett extrapoäng för ärlighet.');addAdr(8);}
+  else{await say('','Korrekt. Stefan känner sig märkligt ansvarsfull.');addAdr(-4);}}
+async function actSprit(){await say('','Stefan spritar händerna. Noggrant. Kanske lite för noggrant.');await slide();
+  await say('','Han halkar och glider tre meter över linoleumgolvet. Läraren skriver "hygienisk" i protokollet.');addAdr(12);}
+
+async function actPlane(e){
+  const c=await ask('','Planet är redo. Fyratusen meter. Hoppa?',['HOPPA!','Kolla utrustningen först']);
+  if(c===1)await say('Stefan','Fallskärm: check. Solglasögon: check. Flip-flops: dubbelcheck.');
+  await say('','Dörren öppnas. Det viner. Stefan ler som ett barn på julafton.');
+  await freefall();
+  await say('',cycle(e,['Stefan landar mitt i ett äppelträd. Han sitter kvar en stund och äter ett äpple innan han klättrar ner.',
+    'Stefan landar i en kohage. Korna ser inte förvånade ut. De har sett honom förut.',
+    'Stefan landar exakt på målet. Ingen tror honom, eftersom ingen tittade.']));
+  if(!state.stars.has('sky')){await say('','Någonstans på vägen ner försvann en flip-flop. Den har ingen sett sen dess.');P.oneFlop=true;}
+  addAdr(10);await star('sky','Himlastormaren');}
+async function actInstr(e){await seq(cycle(e,[
+  [['Instruktören','Hoppar du i flip-flops?'],['Stefan','De är aerodynamiska.']],
+  [['Instruktören','Har du packat skärmen själv?'],['Stefan','Mer eller mindre.'],['Instruktören','...mest mindre?']],
+  [['Instruktören','Du vet att man inte ska vinka till folk under fritt fall?'],['Stefan','Man ska vara trevlig.']],
+  [['Instruktören','Grattis! Du är officiellt äldst i hoppklubben nu.'],['Stefan','Jag hoppade redan på den tiden fallskärmar var lakan.']]]));addAdr(3);}
+async function actHangar(){await say('','På dörren står HOPPKLUBBEN. Under har någon klottrat: "STEFAN, SLUTA LANDA I KOHAGEN."');}
+async function actSock(){await say('','Vindstruten pekar åt alla håll samtidigt. Perfekt hoppväder, tycker Stefan.');}
+async function actRope(){await say('','Ett rep är spänt över stigen. Skylten säger: "Festen öppnar när du har tre stjärnor."');await say('','Du har '+state.stars.size+' av 3.');}
+
+async function actCake(e){
+  if(!state.finale){state.finale=true;confetti();
+    await say('Alla','GRATTIS PÅ FÖDELSEDAGEN, STEFAN!');
+    await say('Lo','Får jag blåsa också?');
+    await say('','Stefan och Lo blåser ut ljusen tillsammans, så hårt att en stol välter.');state.candles=false;
+    await say('','Det fick bara plats tre ljus på tårtan. Resten av de '+ALDER+' står i en hink bredvid.');
+    await say('','Åsa, Luna, Lilly, Anna, Mathias, Lo och Sofia sjunger. Falskt, men med hela hjärtat.');
+    await say('','Du fick: HJÄRTSOLGLASÖGON!');state.glasses=true;
+    await say('Stefan','Nu ser jag allt med kärlek. Och lite i rosa.');
+    await showFinal();
+  }else{const l=cycle(e,['Det finns vegansk tårta kvar. Stefan tar en bit till. Och en till.','Stefan tänder ljusen igen bara för att få blåsa ut dem en gång till.']);
+    if(l.includes('tänder')){state.candles=true;await say('',l);state.candles=false;}else await say('',l);addAdr(5);}}
+async function famTalk(e,lines){await seq(cycle(e,lines));addAdr(4);}
+async function actAsa(e){await famTalk(e,[
+  [['Åsa','Har du shorts på dig på din egen födelsedagsfest?'],['Stefan','Speciellt på min egen födelsedagsfest.']],
+  [['Åsa','Lova att du inte hoppar från taket i kväll.'],['Stefan','Jag lovar inget, men jag lovar att tänka på det.']]]);}
+async function actLuna(e){const i=(e.n||0)%3;e.n=(e.n||0)+1;
+  if(i===0){await say('Luna','Pappa. Snälla. Gör inte golvglidningen.');await slide();await say('','Han gör golvglidningen. Genom halva festen, på rygg. Luna låtsas att hon inte känner honom.');addAdr(15);}
+  else if(i===1){await seq([['Luna','Kan du inte ha långbyxor nån gång?'],['Stefan','Kanske när jag fyller hundra. Om några veckor alltså.']]);addAdr(3);}
+  else{await seq([['Luna','Pappa, du är typ antik.'],['Stefan','Vintage, Luna. Vintage.']]);addAdr(3);}}
+async function actLilly(e){
+  if(P.oneFlop){await say('Lilly','Pappa! Jag hittade din flip-flop i bålen!');P.oneFlop=false;await say('Stefan','Den har kommit hem.');addAdr(5);return;}
+  await famTalk(e,[
+    [['Lilly','Pappa, kan du lära mig hoppa fallskärm?'],['Åsa','Nej.'],['Stefan','Du hörde Åsa.']],
+    [['Lilly','Får jag den största biten tårta?'],['Stefan','Bara om du slåss om den med mig.']]]);}
+async function actAnna(e){await famTalk(e,[
+  [['Anna','Grattis Stefan! Spelet är ditt. Alla buggar får du skylla på mig.']],
+  [['Anna','Har du klarat alla tre stjärnor nu?'],['Stefan','Alla tre.'],['Anna','Bra. Då slipper jag göra ett spel till nästa år.']]]);}
+async function actLo(e){await famTalk(e,[
+  [['Lo','Varför har du inga strumpor?'],['Stefan','Strumpor är för fegisar.'],['Lo','Jag har strumpor.'],['Stefan','...Strumpor är för coola fegisar.']],
+  [['Lo','Kan du flyga?'],['Stefan','Bara neråt.']],
+  [['Lo','Är du äldre än dinosaurierna?'],['Stefan','Bara lite. Jag red på en när jag var liten.']]]);}
+async function actMathias(e){await famTalk(e,[
+  [['Mathias','Skål för Stefan!'],['','En tårtsmula landar i Mathias skägg. Den bor där nu.']],
+  [['Mathias','Nästa år hoppar vi fallskärm ihop.'],['Stefan','Deal. Jag håller mig i ditt skägg.']]]);}
+async function actSofia(e){await famTalk(e,[
+  [['Sofia','Nu vet du inte om du pratar med Anna eller mig.'],['Stefan','Du är den som inte har gjort ett spel om mig.']],
+  [['Sofia','Är det sant att du ska bli sjuksköterska?'],['Stefan','Ja. Någon måste ju lappa ihop mig.']]]);}
+async function boredom(){await say('',pick(['Stefan har så tråkigt att han börjar sortera skruvar efter personlighet.',
+  'Stefan har tråkigt. Han överväger att läsa en bruksanvisning. Det är illa nu.',
+  'Inget har hänt på fyra minuter. Stefan planerar nästa fallskärmshopp i huvudet.']));
+  await say('','Adrenalinet fylls på lite av ren panik.');state.adr=35;}
+async function freezing(){await say('','Stefans vader har blivit lätt blå. Någon räcker fram ett par långbyxor.');await say('Stefan','Nej tack.');state.cold=45;}
+
+function showFinal(){return new Promise(res=>{$('fromLine').textContent='Kram från '+AVSANDARE;const f=$('final');f.style.display='flex';$('finalBtn').focus();
+  $('finalBtn').onclick=()=>{f.style.display='none';res();};});}
+
+// ---------- Freefall ----------
+function freefall(){return new Promise(res=>{state.mode='fall';
+  F={t:0,dur:20,x:160,sy:100,items:[],clouds:[],spawn:0.8,res,flipped:false,chute:false,flop:null};
+  for(let i=0;i<9;i++)F.clouds.push({x:Math.random()*W,y:Math.random()*H,w:30+Math.random()*50,s:.6+Math.random()*.8});});}
+function updateFall(dt){F.t+=dt;const k=F.chute?.35:1;
+  const mx=(held.has('right')?1:0)-(held.has('left')?1:0);F.x=clamp(F.x+mx*125*dt,16,W-16);
+  state.cold=clamp(state.cold+(F.chute?1:5)*dt,0,100);
+  for(const c of F.clouds){c.y-=150*k*c.s*dt;if(c.y<-20){c.y=H+20;c.x=Math.random()*W;}}
+  F.spawn-=dt;if(F.spawn<=0&&!F.chute){F.spawn=.33;F.items.push({x:16+Math.random()*(W-32),y:H+10,type:Math.random()<.28?'goose':'bolt',ph:Math.random()*6});}
+  for(const it of F.items){it.y-=150*k*dt;if(it.type==='goose')it.x+=Math.sin(F.t*3+it.ph)*25*dt;
+    if(!it.hit&&Math.abs(it.x-F.x)<12&&Math.abs(it.y-F.sy)<14){it.hit=true;
+      if(it.type==='bolt'){addAdr(4);}else{state.shake=.3;floater('GÅS I ANSIKTET!',F.x,F.sy-40,'#fff');addAdr(7);}}}
+  F.items=F.items.filter(i=>!i.hit&&i.y>-20);
+  if(!F.flipped&&F.t>7){F.flipped=true;floater('NEJ! FLIP-FLOPPEN!',F.x,F.sy-40,'#ffe07a');F.flop={x:F.x+4,y:F.sy+18};}
+  if(F.flop){F.flop.y-=70*dt;F.flop.x+=12*dt;}
+  if(!F.chute&&F.t>F.dur*.72){F.chute=true;floater('SKÄRMEN UTE!',F.x,F.sy-56,'#fff');}
+  if(F.t>=F.dur){state.mode='play';goScene('airfield',6,8.3);P.face='down';const r=F.res;F=null;r();}}
+function drawFall(){const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#4fa9ef');g.addColorStop(1,'#c5eaff');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  const gs=F.dur-3;if(F.t>gs){const gy=H-(F.t-gs)/3*70;R(0,gy,W,H,'#5fa843');R(40,gy+10,60,30,'#8fbf4a');R(180,gy+6,90,40,'#c9b458');R(120,gy+30,50,20,'#4e8f39');}
+  for(const c of F.clouds){R(c.x,c.y,c.w,8,'rgba(255,255,255,.85)');R(c.x+6,c.y-5,c.w-14,6,'rgba(255,255,255,.85)');R(c.x+4,c.y+8,c.w-8,3,'rgba(255,255,255,.55)');}
+  for(const it of F.items){const x=it.x,y=it.y;
+    if(it.type==='bolt'){R(x,y-5,3,3,'#ffd23f');R(x-1,y-2,5,2,'#ffd23f');R(x-2,y,3,3,'#ffd23f');R(x+1,y-4,1,1,'#fff6c4');}
+    else{const f=Math.floor(F.t*8+it.ph)%2;R(x-5,y-2,10,5,'#fff');R(x+3,y-6,2,5,'#fff');R(x+3,y-8,4,3,'#fff');R(x+7,y-7,2,1,'#f39c12');R(x+5,y-7,1,1,'#222');R(x-3,y-2-(f?3:0),6,2,'#ddd');}}
+  if(F.flop){R(F.flop.x,F.flop.y,5,2,'#2aa7d8');R(F.flop.x+2,F.flop.y-1,1,1,'#2aa7d8');}
+  const sway=F.chute?Math.sin(F.t*2)*3:0,x=F.x+sway;
+  if(F.chute){const cy=F.sy-44;ctx.strokeStyle='rgba(40,40,40,.7)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x-21,cy+8);ctx.lineTo(x-6,F.sy-14);ctx.moveTo(x+21,cy+8);ctx.lineTo(x+6,F.sy-14);ctx.stroke();
+    R(x-22,cy,44,8,'#e74c3c');R(x-18,cy-4,36,4,'#e74c3c');R(x-6,cy-4,4,12,'#fff');R(x+4,cy-4,4,12,'#fff');}
+  ctx.drawImage(SPR[state.glasses?1:0].down[0],Math.round(x-12),F.sy-18,24,36);
+  if(F.flipped)R(Math.round(x-12)+16,F.sy+16,6,2,PAL.S);
+  if(F.t<3.2)txt('Styr med vänster och höger. Fånga blixtarna!',W/2,46,'#fff',15,'center');}
+
+// ---------- Player & movement ----------
+function solidAt(px,py){const tx=Math.floor(px/T),ty=Math.floor(py/T);if(tx<0||ty<0||tx>=20||ty>=15)return true;return scene.solid[ty][tx]===1;}
+function hit(x,y){const l=x-5,r=x+4,tp=y-4,b=y;
+  if(solidAt(l,tp)||solidAt(r,tp)||solidAt(l,b)||solidAt(r,b))return true;
+  for(const e of visEnts()){if(e.solid===false)continue;if(r>=e.px&&l<e.px+e.pw&&b>=e.py&&tp<e.py+e.ph)return true;}return false;}
+function move(dx,dy){if(!hit(P.x+dx,P.y))P.x+=dx;if(!hit(P.x,P.y+dy))P.y+=dy;}
+function target(){const v=dirv(P.face),fx=P.x+v[0]*10,fy=P.y-3+v[1]*10,m=4;let best=null;
+  for(const e of visEnts()){if(!e.act)continue;if(fx>=e.px-m&&fx<=e.px+e.pw+m&&fy>=e.py-m&&fy<=e.py+e.ph+m)best=e;}return best;}
+function goScene(id,sx,sy){scene=SCENES[id];if(!scene.bg)scene.bg=paintBg(scene);P.x=sx*T;P.y=sy*T;P.face=sx<10?'right':'left';
+  state.fade=1;state.banner={s:scene.name,t:2.2};parts.length=0;
+  if(scene.enter&&!scene.visited){scene.visited=true;setTimeout(()=>runEvent(scene.enter),350);}scene.visited=true;}
+function drawPlayer(){const g=state.glasses?1:0;
+  R(P.x-5,P.y-2,10,3,'rgba(0,0,0,.22)');
+  if(P.slide){ctx.save();ctx.translate(Math.round(P.x),Math.round(P.y-6));ctx.rotate(P.face==='left'?Math.PI/2:-Math.PI/2);ctx.drawImage(SPR[g].down[0],-6,-9);ctx.restore();return;}
+  const key=(P.face==='left'||P.face==='right')?'side':P.face;const fr=P.moving?[1,0,2,0][Math.abs(Math.floor(P.anim*8))%4]:0;
+  const s=SPR[g][key][fr],x=Math.round(P.x-6),y=Math.round(P.y-17);
+  if(P.face==='left'){ctx.save();ctx.translate(x+12,y);ctx.scale(-1,1);ctx.drawImage(s,0,0);ctx.restore();}else ctx.drawImage(s,x,y);
+  if(P.oneFlop&&key!=='side'&&fr===0)R(x+8,y+17,3,1,PAL.S);}
+function drawBang(e){if(e.label){ctx.font='11px VT323, monospace';const w=Math.ceil(ctx.measureText(e.label).width)+6,lx=Math.round(e.px+e.pw/2-w/2),ly=Math.round(e.py-(e.tall||4)-26);R(lx,ly,w,10,'rgba(22,14,30,.8)');txt(e.label,lx+3,ly+8,'#ffe7b0',11);}const x=Math.round(e.px+e.pw/2),y=Math.round(e.py-(e.tall||4)-2+Math.sin(t*6)*1.5);
+  R(x-5,y-13,11,13,'#1b1224');R(x-4,y-12,9,11,'#fff');R(x-1,y-10,2,5,'#e0492f');R(x-1,y-4,2,2,'#e0492f');R(x-1,y,3,2,'#1b1224');}
+function drawExits(){ctx.font='12px VT323, monospace';for(const ex of scene.exits){if(isBlocked(ex))continue;const left=ex.px<T;
+  const w=Math.ceil(ctx.measureText(ex.label).width)+6,x=left?2:W-2-w,y=ex.py-15;R(x,y,w,12,'rgba(22,14,30,.78)');txt(ex.label,x+3,y+10,'#ffe7b0',12);ctx.font='12px VT323, monospace';}}
+const STAR=["...#...","..###..","#######",".#####.","..###..",".##.##.","##...##"];
+function drawStar(x,y,on){STAR.forEach((r,j)=>[...r].forEach((c,i)=>{if(c==='#')R(x+i,y+j,1,1,on?'#ffd23f':'#5a4c6a');}));}
+function bar(x,y,w,h,f,c){R(x,y,w,h,'#2b2233');R(x,y,Math.round(w*clamp(f,0,1)),h,c);}
+function drawHud(){R(4,4,92,31,'rgba(22,14,30,.75)');
+  txt('Adrenalin',8,13,'#ffd2bd',12);bar(8,15,84,4,state.adr/100,state.adr<25?(Math.floor(t*6)%2?'#ff2d2d':'#7a1a1a'):'#ff6a3d');
+  txt('Köld',8,28,'#cfe8ff',12);bar(8,30,84,3,state.cold/100,'#5ab4ff');
+  if(state.mode==='fall'){R(W-66,4,62,15,'rgba(22,14,30,.75)');txt(Math.max(0,Math.round(4000*(1-F.t/F.dur)))+' m',W-8,15,'#fff',14,'right');}
+  else{R(W-35,4,31,13,'rgba(22,14,30,.75)');for(let i=0;i<3;i++)drawStar(W-32+i*9,7,i<state.stars.size);}}
+function drawTitle(){const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#ff9f5a');g.addColorStop(.6,'#ffd9a0');g.addColorStop(1,'#ffe9c4');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  R(236,150,40,40,'rgba(255,240,200,.55)');R(0,206,W,34,'#5fa843');R(0,206,W,2,'#76c257');
+  const fr=[1,0,2,0][Math.abs(Math.floor(t*5))%4],b=Math.round(Math.abs(Math.sin(t*5))*2);
+  R(W/2-26,226,52,6,'rgba(0,0,0,.2)');ctx.drawImage(SPR[0].down[fr],W/2-30,138-b,60,90);}
+
+// ---------- Particles ----------
+function updParts(dt){
+  if(state.sparkT>0){state.sparkT-=dt;for(let i=0;i<4;i++)parts.push({x:state.sparkX,y:state.sparkY,vx:(Math.random()-.5)*130,vy:-Math.random()*100,g:280,l:.35+Math.random()*.4,c:Math.random()<.5?'#fff3a0':'#ffb13b',s:1});}
+  for(const p of parts){p.vy+=p.g*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.l-=dt;}
+  for(let i=parts.length-1;i>=0;i--)if(parts[i].l<=0||parts[i].y>H+10)parts.splice(i,1);
+  for(const f of floaters){f.y-=16*dt;f.l-=dt;}
+  for(let i=floaters.length-1;i>=0;i--)if(floaters[i].l<=0)floaters.splice(i,1);}
+function drawParts(){for(const p of parts)R(p.x,p.y,p.s,p.s,p.c);
+  for(const f of floaters){ctx.globalAlpha=clamp(f.l,0,1);txt(f.s,f.x,f.y,f.c,13,'center');ctx.globalAlpha=1;}}
+
+// ---------- Loop ----------
+function startGame(){if(state.mode!=='title')return;$('title').style.display='none';state.mode='play';goScene('workshop',5,8.5);P.face='down';
+  setTimeout(()=>runEvent(async()=>{
+    await say('','Det här är Stefan. Idag är det den 28 september och han fyller år. Han firar i shorts och flip-flops, som vanligt.');
+    await say('','Stefan behöver adrenalin. Sjunker mätaren till noll dör han av tristess. Nästan.');
+    await say('','Samla tre stjärnor genom att göra tveksamma saker. Gå fram till saker och tryck mellanslag eller A.');}),400);}
+$('startBtn').addEventListener('click',startGame);
+
+function update(dt){t+=dt;
+  if(state.fade>0)state.fade=Math.max(0,state.fade-dt*2.5);
+  if(state.banner.t>0)state.banner.t-=dt;
+  if(state.shake>0)state.shake-=dt;
+  updParts(dt);
+  if(state.mode==='title'){if(pressed.has('a'))startGame();return;}
+  if(dlg){updateDialog(dt);handleDialogInput();return;}
+  if(state.mode==='fall'){if(F)updateFall(dt);return;}
+  if(P.slide){P.slide.t+=dt;if(P.slide.t<.8){const v=dirv(P.face);move(v[0]*110*dt,v[1]*110*dt);}
+    if(P.slide.t>1.5){const r=P.slide.res;P.slide=null;r();}return;}
+  if(state.busy)return;
+  state.adr=Math.max(0,state.adr-dt/1.1);state.cold=clamp(state.cold+scene.cold*dt,0,100);
+  if(state.adr<=0){runEvent(boredom);return;}
+  if(state.cold>=100){runEvent(freezing);return;}
+  const mx=(held.has('right')?1:0)-(held.has('left')?1:0),my=(held.has('down')?1:0)-(held.has('up')?1:0);
+  if(mx||my){if(mx)P.face=mx>0?'right':'left';else P.face=my>0?'down':'up';const l=Math.hypot(mx,my);move(mx/l*72*dt,my/l*72*dt);P.anim+=dt;P.moving=true;}
+  else{P.moving=false;P.anim=0;}
+  if(pressed.has('a')){const tg=target();if(tg)runEvent(()=>tg.act(tg));}
+  for(const ex of scene.exits){if(isBlocked(ex))continue;if(P.x>=ex.px&&P.x<ex.px+ex.pw&&P.y>=ex.py&&P.y<ex.py+ex.ph){goScene(ex.to,ex.sx,ex.sy);break;}}}
+
+function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,W,H);
+  if(state.mode==='title'){drawTitle();return;}
+  if(state.shake>0)ctx.setTransform(1,0,0,1,(Math.random()*4-2)|0,(Math.random()*4-2)|0);
+  if(state.mode==='fall'&&F){drawFall();}
+  else{ctx.drawImage(scene.bg,0,0);drawExits();
+    const list=visEnts().map(e=>({k:e.py+e.ph,f:()=>e.draw(e)}));list.push({k:P.y+.5,f:drawPlayer});
+    list.sort((a,b)=>a.k-b.k).forEach(o=>o.f());
+    const tg=(!state.busy&&!dlg&&!P.slide)?target():null;if(tg)drawBang(tg);abtn.classList.toggle('ready',!!tg);}
+  drawParts();ctx.setTransform(1,0,0,1,0,0);
+  if(state.mode!=='fall'||F)drawHud();
+  if(state.banner.t>0&&state.mode==='play'){ctx.globalAlpha=clamp(state.banner.t,0,1);txt(state.banner.s,W/2,58,'#fff',22,'center');ctx.globalAlpha=1;}
+  if(state.fade>0){ctx.fillStyle='rgba(0,0,0,'+state.fade+')';ctx.fillRect(0,0,W,H);}}
+
+let last=performance.now();
+function loop(now){const dt=clamp((now-last)/1000,0,.05);last=now;update(dt);draw();pressed.clear();requestAnimationFrame(loop);}
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

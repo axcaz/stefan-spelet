@@ -87,6 +87,14 @@ body.touch #hint{display:none}
 #abtn.ready{background:#ff6a3d}
 #pad button:active{transform:translateY(3px)}
 @media (prefers-reduced-motion: reduce){#dnext{animation:none}}
+@media (orientation: landscape) and (max-height: 600px){
+body.touch #screen{width:min(calc(100vw - 340px),calc((100vh - 16px) * 4 / 3))}
+@supports (height:100dvh){body.touch #screen{width:min(calc(100vw - 340px),calc((100dvh - 16px) * 4 / 3))}}
+body.touch #pad{position:fixed;inset:0;width:auto;padding:0 max(10px,env(safe-area-inset-right,0px)) 0 max(10px,env(safe-area-inset-left,0px));pointer-events:none}
+body.touch #pad > *{pointer-events:auto}
+body.touch .dpad{grid-template-columns:repeat(3,50px);grid-template-rows:repeat(3,50px)}
+body.touch #abtn{width:76px;height:76px;font-size:20px}
+}
 </style>
 </head>
 <body>
@@ -111,7 +119,7 @@ body.touch #hint{display:none}
     <button id="finalBtn" class="pixbtn">Fortsätt spela</button>
   </div>
 </div>
-<div id="hint">Piltangenter eller WASD för att gå. Mellanslag för att prata och göra saker.</div>
+<div id="hint">Piltangenter eller WASD för att gå. Mellanslag eller Enter för att prata och göra saker.</div>
 <div id="pad">
   <div class="dpad">
     <button class="u" data-k="up" aria-label="Upp">▲</button>

@@ -127,7 +127,7 @@ body.touch #hint{display:none}
 'use strict';
 // ====== Ändra här ======
 const AVSANDARE = 'Anna'; // vem presenten är från
-const ALDER = 47;          // hur gammal Stefan fyller
+const ALDER = 45;          // hur gammal Stefan fyller
 // =======================
 
 const W=320,H=240,T=16;
@@ -558,7 +558,7 @@ async function actLo(e){await famTalk(e,[
   [['Lo','Är du äldre än dinosaurierna?'],['Stefan','Bara lite. Jag red på en när jag var liten.']]]);}
 async function actMathias(e){await famTalk(e,[
   [['Mathias','Skål för Stefan!'],['','En tårtsmula landar i Mathias skägg. Den bor där nu.']],
-  [['Mathias','Nästa år hoppar vi fallskärm ihop.'],['Stefan','Deal. Jag håller mig i ditt skägg.']]]);}
+  [['Stefan','Följer du med och hoppar fallskärm nästa år?'],['Mathias','Aldrig i livet. Jag vinkar från marken.'],['Stefan','Då siktar jag på dig.']]]);}
 async function actSofia(e){await famTalk(e,[
   [['Sofia','Nu vet du inte om du pratar med Anna eller mig.'],['Stefan','Du är den som inte har gjort ett spel om mig.']],
   [['Sofia','Är det sant att du ska bli sjuksköterska?'],['Stefan','Ja. Någon måste ju lappa ihop mig.']]]);}

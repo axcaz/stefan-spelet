@@ -551,7 +551,7 @@ async function actAsa(e){await famTalk(e,[
   [['Åsa','Lova att du inte hoppar från taket i kväll.'],['Stefan','Jag lovar inget, men jag lovar att tänka på det.']]]);}
 async function actLuna(e){const i=(e.n||0)%3;e.n=(e.n||0)+1;
   if(i===0){await say('Luna','Pappa. Snälla. Gör inte golvglidningen.');await slide();await say('','Han gör golvglidningen. Genom halva festen, på rygg. Luna låtsas att hon inte känner honom.');addAdr(15);}
-  else if(i===1){await seq([['Luna','Kan du inte ha långbyxor nån gång?'],['Stefan','Kanske när jag fyller hundra. Om några veckor alltså.']]);addAdr(3);}
+  else if(i===1){await seq([['Luna','Kan du inte ha långbyxor nån gång?'],['Stefan','Kanske när jag fyller hundra. Om ett par år alltså.']]);addAdr(3);}
   else{await seq([['Luna','Pappa, du är typ antik.'],['Stefan','Vintage, Luna. Vintage.']]);addAdr(3);}}
 async function actLilly(e){
   if(P.oneFlop){await say('Lilly','Pappa! Jag hittade din flip-flop i bålen!');P.oneFlop=false;await say('Stefan','Den har kommit hem.');addAdr(5);return;}

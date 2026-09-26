@@ -499,9 +499,10 @@ async function actDocka(e){
     await star('nurse','Blivande sjuksköterska');
   }else{await say('',cycle(e,['Stefan tar Berits blodtryck. 120/80. Hans eget ligger på 180/110 av ren förväntan.','Berit ser ut som att hon har varit med om saker.','Stefan lägger Berit i stabilt sidoläge. Sen sig själv, för säkerhets skull.']));addAdr(4);}}
 async function actSkel(e){await say('',cycle(e,['Stefan bjuder upp skelettet på en dans. Det tackar ja. Bästa dansen i skolans historia.','Stefan jämför sina revben med skelettets. Han vinner. Tror han.','Stefan ställer sig bredvid skelettet. Skelettet ser yngre ut.']));addAdr(6);}
-async function actTenta(){const c=await ask('','Tentafråga 7: Vad är vanligaste orsaken till skador hos vuxna män?',['Fall','Trafikolyckor','"Håll min öl"']);
+async function actTenta(){const c=await ask('','Tentafråga 7: Vad är den vanligaste orsaken till att folk i Sverige skadas så illa att de behöver sjukhusvård?',['Fall','Trafikolyckor','"Håll min öl"']);
   if(c===2){await say('','Fel enligt facit. Läraren ger ändå ett extrapoäng för ärlighet.');addAdr(8);}
-  else{await say('','Korrekt. Stefan känner sig märkligt ansvarsfull.');addAdr(-4);}}
+  else if(c===1){await say('','Fel. Det är fall, med bred marginal. Men bra gissat, det tror nästan alla.');addAdr(2);}
+  else{await say('','Korrekt. Fall står för sju av tio sjukhusinläggningar efter olyckor. Stefan känner sig märkligt ansvarsfull.');addAdr(-4);}}
 async function actSprit(){await say('','Stefan spritar händerna. Noggrant. Kanske lite för noggrant.');await slide();
   await say('','Han halkar och glider tre meter över linoleumgolvet. Läraren skriver "hygienisk" i protokollet.');addAdr(12);}
 

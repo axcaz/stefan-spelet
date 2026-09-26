@@ -680,9 +680,10 @@ function draw(){ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,W,H);
   if(state.mode==='title'){drawTitle();return;}
   if(state.shake>0)ctx.setTransform(1,0,0,1,(Math.random()*4-2)|0,(Math.random()*4-2)|0);
   if(state.mode==='fall'&&F){drawFall();}
-  else{ctx.drawImage(scene.bg,0,0);drawExits();
+  else{ctx.drawImage(scene.bg,0,0);
     const list=visEnts().map(e=>({k:e.py+e.ph,f:()=>e.draw(e)}));list.push({k:P.y+.5,f:drawPlayer});
     list.sort((a,b)=>a.k-b.k).forEach(o=>o.f());
+    drawExits();
     const tg=(!state.busy&&!dlg&&!P.slide)?target():null;if(tg)drawBang(tg);abtn.classList.toggle('ready',!!tg);}
   drawParts();ctx.setTransform(1,0,0,1,0,0);
   if(state.mode!=='fall'||F)drawHud();
